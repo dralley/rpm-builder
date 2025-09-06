@@ -1,15 +1,16 @@
 [package]
 name = "rpm-builder"
-version = "0.8.1"
-authors = ["Rene Richter <richterrettich@gmail.com>"]
-edition = "2018"
-build= "build.rs"
+version = "0.1.0"
+authors = [
+    "Rene Richter <richterrettich@gmail.com>",
+    "Daniel Alley <dalley@redhat.com"
+]
+edition = "2024"
 
 [dependencies]
-rpm-rs = "0.8.0"
-clap= "2"
+rpm = { version = "0.18.0", default-features = false, features = ["zstd-compression", "gzip-compression", "signature-pgp"] }
+clap_derive = { version = "4.5" }
 chrono = "0.4"
 regex = "1"
-
-[build-dependencies]
-clap = "2"
+clap = "4.5.46"
+anyhow = "1.0.99"
