@@ -37,7 +37,7 @@ fn test_compressed() -> Result<(), Box<dyn std::error::Error>> {
                     "--version",
                     "1.0.0",
                     "--dir",
-                    &format!("{}/tests/test_assets:/src", &work_dir.to_string_lossy()),
+                    &format!("{}/tests/assets:/src", &work_dir.to_string_lossy()),
                     "--compression",
                     compression,
                     "rpm-builder",
@@ -46,24 +46,24 @@ fn test_compressed() -> Result<(), Box<dyn std::error::Error>> {
                     "--release",
                     "foo-bar",
                     "--pre-install-script",
-                    &format!(
-                        "{}/tests/test_assets/preinst.sh",
-                        &work_dir.to_string_lossy()
-                    ),
+                    &format!("{}/tests/assets/preinst.sh", &work_dir.to_string_lossy()),
                 ])
                 .output();
-            (compression,result)
+            (compression, result)
         });
         handles.push(handle);
     }
     for handle in handles {
-       let (compression,result) =  handle.join().expect("unable to join thread");
-       let result = result?;
-       if !result.status.success() {
-           let stdout = String::from_utf8_lossy(&result.stdout);
-           let stderr = String::from_utf8_lossy(&result.stderr);
-           panic!("{} faild with stdout: {}\nstderr:{}",compression,stdout,stderr);
-       }
+        let (compression, result) = handle.join().expect("unable to join thread");
+        let result = result?;
+        if !result.status.success() {
+            let stdout = String::from_utf8_lossy(&result.stdout);
+            let stderr = String::from_utf8_lossy(&result.stderr);
+            panic!(
+                "{} faild with stdout: {}\nstderr:{}",
+                compression, stdout, stderr
+            );
+        }
     }
 
     std::fs::remove_dir_all(tmp_dir)?;
@@ -115,9 +115,9 @@ fn test_signature() -> Result<(), Box<dyn std::error::Error>> {
     rpm_builder_path.push("target/debug/rpm-builder");
 
     let mut private_key_path = workspace_path.clone();
-    private_key_path.push("tests/test_assets/package-manager.key");
+    private_key_path.push("tests/assets/package-manager.key");
     let mut public_key_path = workspace_path.clone();
-    public_key_path.push("tests/test_assets/package-manager.key.pub");
+    public_key_path.push("tests/assets/package-manager.key.pub");
     let output = Command::new(rpm_builder_path)
         .args(vec![
             "--exec-file",
@@ -142,9 +142,7 @@ fn test_signature() -> Result<(), Box<dyn std::error::Error>> {
     }
     assert!(output.status.success());
 
-    let rpm_file = std::fs::File::open(&out_file)?;
-    let mut buffer = std::io::BufReader::new(rpm_file);
-    let pkg = rpm::RPMPackage::parse(&mut buffer)?;
+    let pkg = rpm::Package::open(&out_file)?;
 
     let raw_public_key = std::fs::read(public_key_path)?;
     let verifier = rpm::signature::pgp::Verifier::load_from_asc_bytes(&raw_public_key)?;
