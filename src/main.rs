@@ -259,8 +259,8 @@ fn main() -> Result<()> {
         }
         let dir = parts[0];
         let target = PathBuf::from(parts[1]);
-        builder = add_dir(dir, &target, builder)
-            .with_context(|| format!("error adding dir {}", dir))?;
+        builder =
+            add_dir(dir, &target, builder).with_context(|| format!("error adding dir {}", dir))?;
     }
 
     for (src, options) in parse_file_options(&args.doc_file)? {
@@ -270,26 +270,42 @@ fn main() -> Result<()> {
     }
 
     if let Some(scriptlet_path) = args.pre_install_script {
-        let content = fs::read_to_string(&scriptlet_path)
-            .with_context(|| format!("error reading {} {:?}", PRE_INSTALL_SCRIPTLET_ARG, scriptlet_path))?;
+        let content = fs::read_to_string(&scriptlet_path).with_context(|| {
+            format!(
+                "error reading {} {:?}",
+                PRE_INSTALL_SCRIPTLET_ARG, scriptlet_path
+            )
+        })?;
         builder = builder.pre_install_script(content);
     }
 
     if let Some(scriptlet_path) = args.post_install_script {
-        let content = fs::read_to_string(&scriptlet_path)
-            .with_context(|| format!("error reading {} {:?}", POST_INSTALL_SCRIPTLET_ARG, scriptlet_path))?;
+        let content = fs::read_to_string(&scriptlet_path).with_context(|| {
+            format!(
+                "error reading {} {:?}",
+                POST_INSTALL_SCRIPTLET_ARG, scriptlet_path
+            )
+        })?;
         builder = builder.post_install_script(content);
     }
 
     if let Some(scriptlet_path) = args.pre_uninstall_script {
-        let content = fs::read_to_string(&scriptlet_path)
-            .with_context(|| format!("error reading {} {:?}", PRE_UNINSTALL_SCRIPTLET_ARG, scriptlet_path))?;
+        let content = fs::read_to_string(&scriptlet_path).with_context(|| {
+            format!(
+                "error reading {} {:?}",
+                PRE_UNINSTALL_SCRIPTLET_ARG, scriptlet_path
+            )
+        })?;
         builder = builder.pre_uninstall_script(content);
     }
 
     if let Some(scriptlet_path) = args.post_uninstall_script {
-        let content = fs::read_to_string(&scriptlet_path)
-            .with_context(|| format!("error reading {} {:?}", POST_UNINSTALL_SCRIPTLET_ARG, scriptlet_path))?;
+        let content = fs::read_to_string(&scriptlet_path).with_context(|| {
+            format!(
+                "error reading {} {:?}",
+                POST_UNINSTALL_SCRIPTLET_ARG, scriptlet_path
+            )
+        })?;
         builder = builder.post_uninstall_script(content);
     }
 
@@ -307,11 +323,7 @@ fn main() -> Result<()> {
         let parse_result = chrono::NaiveDate::parse_from_str(raw_time, "%Y-%m-%d");
         let date = parse_result
             .with_context(|| format!("error while parsing date time: {:?}", parse_result.err()))?;
-        let seconds = date
-            .and_hms_opt(0, 0, 0)
-            .unwrap()
-            .and_utc()
-            .timestamp();
+        let seconds = date.and_hms_opt(0, 0, 0).unwrap().and_utc().timestamp();
         builder = builder.add_changelog_entry(name, content, rpm::Timestamp::from(seconds as u32));
     }
 
@@ -336,11 +348,20 @@ fn main() -> Result<()> {
     }
 
     let pkg = if let Some(signing_key_path) = args.sign_with_pgp_asc {
-        let raw_key = fs::read(&signing_key_path)
-            .with_context(|| format!("unable to load private key file from path {:?}", signing_key_path))?;
+        let raw_key = fs::read(&signing_key_path).with_context(|| {
+            format!(
+                "unable to load private key file from path {:?}",
+                signing_key_path
+            )
+        })?;
 
-        let signer = rpm::signature::pgp::Signer::load_from_asc_bytes(&raw_key)
-            .with_context(|| format!("unable to create signer from private key {:?}", signing_key_path))?;
+        let signer =
+            rpm::signature::pgp::Signer::load_from_asc_bytes(&raw_key).with_context(|| {
+                format!(
+                    "unable to create signer from private key {:?}",
+                    signing_key_path
+                )
+            })?;
 
         builder.build_and_sign(signer)?
     } else {
@@ -374,9 +395,7 @@ fn add_dir<P: AsRef<Path>>(
             entry.path()
         };
 
-        let file_name = source
-            .file_name()
-            .context("path does not have filename")?;
+        let file_name = source.file_name().context("path does not have filename")?;
 
         new_target.push(file_name);
 
@@ -389,9 +408,7 @@ fn add_dir<P: AsRef<Path>>(
     Ok(builder)
 }
 
-fn parse_file_options(
-    raw_files: &Vec<String>,
-) -> Result<Vec<(&str, rpm::FileOptionsBuilder)>> {
+fn parse_file_options(raw_files: &Vec<String>) -> Result<Vec<(&str, rpm::FileOptionsBuilder)>> {
     raw_files
         .iter()
         .map(|input| {
@@ -429,10 +446,7 @@ fn parse_dependency(line: &str) -> Result<rpm::Dependency> {
             ">=" => rpm::Dependency::greater_eq(&parts[1], &parts[4]),
             ">" => rpm::Dependency::greater(&parts[1], &parts[4]),
             _ => {
-                anyhow::bail!(
-                    "regex is invalid here, got unknown match {}",
-                    &parts[3]
-                );
+                anyhow::bail!("regex is invalid here, got unknown match {}", &parts[3]);
             }
         };
         Ok(dep)
