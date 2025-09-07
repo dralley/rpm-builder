@@ -14,3 +14,6 @@ chrono = "0.4"
 regex = "1"
 clap = "4.5.46"
 anyhow = "1.0.99"
+
+[dev-dependencies]
+assert_cmd = "2.0.17"
