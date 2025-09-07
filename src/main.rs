@@ -1,3 +1,4 @@
+use anyhow::{Context, Result};
 use chrono;
 use clap;
 use clap::Parser;
@@ -8,50 +9,6 @@ use rpm;
 
 use std::fs;
 use std::path::{Path, PathBuf};
-
-macro_rules! app_err {
-    ($format:expr $(, $x:expr )*) => {
-        AppError{ cause: format!($format,$( $x ),*)}
-    };
-}
-
-struct AppError {
-    cause: String,
-}
-
-impl AppError {
-    fn new<T: Into<String>>(cause: T) -> Self {
-        return AppError {
-            cause: cause.into(),
-        };
-    }
-}
-
-impl std::error::Error for AppError {}
-
-impl std::fmt::Display for AppError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{}", self.cause)
-    }
-}
-
-impl std::fmt::Debug for AppError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{}", self.cause)
-    }
-}
-
-impl From<std::io::Error> for AppError {
-    fn from(err: std::io::Error) -> AppError {
-        AppError::new(format!("{}", err))
-    }
-}
-
-impl From<rpm::Error> for AppError {
-    fn from(err: rpm::Error) -> AppError {
-        AppError::new(format!("{}", err))
-    }
-}
 
 pub const NAME_ARG: &str = "name";
 pub const OUT_ARG: &str = "out";
@@ -252,7 +209,7 @@ pub enum Compression {
     None,
 }
 
-fn main() -> Result<(), AppError> {
+fn main() -> Result<()> {
     let args = Cli::parse();
 
     let compression = match args.compression {
@@ -277,109 +234,80 @@ fn main() -> Result<(), AppError> {
     for (src, options) in parse_file_options(&args.file)? {
         builder = builder
             .with_file(src, options)
-            .map_err(|e| app_err!("error adding regular file {}: {}", src, e))?;
+            .with_context(|| format!("error adding regular file {}", src))?;
     }
 
     for (src, options) in parse_file_options(&args.exec_file)? {
         builder = builder
             .with_file(src, options.mode(0o100755))
-            .map_err(|e| app_err!("error adding executable file {}: {}", src, e))?;
+            .with_context(|| format!("error adding executable file {}", src))?;
     }
 
     for (src, options) in parse_file_options(&args.config_file)? {
         builder = builder
             .with_file(src, options.is_config())
-            .map_err(|e| app_err!("error adding config file {}: {}", src, e))?;
+            .with_context(|| format!("error adding config file {}", src))?;
     }
 
     for dir in args.dir {
         let parts: Vec<&str> = dir.split(":").collect();
         if parts.len() != 2 {
-            return Err(app_err!(
+            anyhow::bail!(
                 "invalid file argument:{} it needs to be of the form <source-path>:<dest-path>",
                 dir
-            ));
+            );
         }
         let dir = parts[0];
         let target = PathBuf::from(parts[1]);
         builder = add_dir(dir, &target, builder)
-            .map_err(|e| app_err!("error adding dir {}: {}", dir, e))?;
+            .with_context(|| format!("error adding dir {}", dir))?;
     }
 
     for (src, options) in parse_file_options(&args.doc_file)? {
         builder = builder
             .with_file(src, options.is_doc())
-            .map_err(|e| app_err!("error adding doc file {}: {}", src, e))?;
+            .with_context(|| format!("error adding doc file {}", src))?;
     }
 
     if let Some(scriptlet_path) = args.pre_install_script {
-        let content = fs::read_to_string(&scriptlet_path).map_err(|e| {
-            app_err!(
-                "error reading {} {:?}: {}",
-                PRE_INSTALL_SCRIPTLET_ARG,
-                scriptlet_path,
-                e
-            )
-        })?;
+        let content = fs::read_to_string(&scriptlet_path)
+            .with_context(|| format!("error reading {} {:?}", PRE_INSTALL_SCRIPTLET_ARG, scriptlet_path))?;
         builder = builder.pre_install_script(content);
     }
 
     if let Some(scriptlet_path) = args.post_install_script {
-        let content = fs::read_to_string(&scriptlet_path).map_err(|e| {
-            app_err!(
-                "error reading {} {:?}: {}",
-                POST_INSTALL_SCRIPTLET_ARG,
-                scriptlet_path,
-                e
-            )
-        })?;
+        let content = fs::read_to_string(&scriptlet_path)
+            .with_context(|| format!("error reading {} {:?}", POST_INSTALL_SCRIPTLET_ARG, scriptlet_path))?;
         builder = builder.post_install_script(content);
     }
 
     if let Some(scriptlet_path) = args.pre_uninstall_script {
-        let content = fs::read_to_string(&scriptlet_path).map_err(|e| {
-            app_err!(
-                "error reading {} {:?}: {}",
-                PRE_UNINSTALL_SCRIPTLET_ARG,
-                scriptlet_path,
-                e
-            )
-        })?;
+        let content = fs::read_to_string(&scriptlet_path)
+            .with_context(|| format!("error reading {} {:?}", PRE_UNINSTALL_SCRIPTLET_ARG, scriptlet_path))?;
         builder = builder.pre_uninstall_script(content);
     }
 
     if let Some(scriptlet_path) = args.post_uninstall_script {
-        let content = fs::read_to_string(&scriptlet_path).map_err(|e| {
-            app_err!(
-                "error reading {} {:?}: {}",
-                POST_UNINSTALL_SCRIPTLET_ARG,
-                scriptlet_path,
-                e
-            )
-        })?;
+        let content = fs::read_to_string(&scriptlet_path)
+            .with_context(|| format!("error reading {} {:?}", POST_UNINSTALL_SCRIPTLET_ARG, scriptlet_path))?;
         builder = builder.post_uninstall_script(content);
     }
 
     for raw_entry in args.changelog {
         let parts: Vec<&str> = raw_entry.split(":").collect();
         if parts.len() != 3 {
-            return Err(app_err!(
+            anyhow::bail!(
                 "invalid file argument:{} it needs to be of the form <author>:<content>:<yyyy-mm-dd>",
                 &raw_entry
-            ));
+            );
         }
         let name = parts[0];
         let content = parts[1];
         let raw_time = parts[2];
         let parse_result = chrono::NaiveDate::parse_from_str(raw_time, "%Y-%m-%d");
-        if parse_result.is_err() {
-            return Err(app_err!(
-                "error while parsing date time: {}",
-                parse_result.err().unwrap()
-            ));
-        }
-        let seconds = parse_result
-            .unwrap()
+        let date = parse_result
+            .with_context(|| format!("error while parsing date time: {:?}", parse_result.err()))?;
+        let seconds = date
             .and_hms_opt(0, 0, 0)
             .unwrap()
             .and_utc()
@@ -408,21 +336,12 @@ fn main() -> Result<(), AppError> {
     }
 
     let pkg = if let Some(signing_key_path) = args.sign_with_pgp_asc {
-        let raw_key = fs::read(&signing_key_path).map_err(|e| {
-            app_err!(
-                "unable to load private key file from path {:?}: {}",
-                signing_key_path,
-                e
-            )
-        })?;
+        let raw_key = fs::read(&signing_key_path)
+            .with_context(|| format!("unable to load private key file from path {:?}", signing_key_path))?;
 
-        let signer = rpm::signature::pgp::Signer::load_from_asc_bytes(&raw_key).map_err(|e| {
-            app_err!(
-                "unable to create signer from private key {:?}: {}",
-                signing_key_path,
-                e
-            )
-        })?;
+        let signer = rpm::signature::pgp::Signer::load_from_asc_bytes(&raw_key)
+            .with_context(|| format!("unable to create signer from private key {:?}", signing_key_path))?;
+
         builder.build_and_sign(signer)?
     } else {
         builder.build()?
@@ -433,9 +352,9 @@ fn main() -> Result<(), AppError> {
         .unwrap_or_else(|| format!("./{}.rpm", pkg.metadata.get_nevra().unwrap().nvra()).into());
 
     let mut out_file = fs::File::create(&output_path)
-        .map_err(|e| app_err!("unable to create output file {:?}: {}", &output_path, e))?;
+        .with_context(|| format!("unable to create output file {:?}", &output_path))?;
     pkg.write(&mut out_file)
-        .map_err(|e| app_err!("unable to write package to path {:?}: {}", &output_path, e))?;
+        .with_context(|| format!("unable to write package to path {:?}", &output_path))?;
     Ok(())
 }
 
@@ -443,7 +362,7 @@ fn add_dir<P: AsRef<Path>>(
     full_path: P,
     target_path: &PathBuf,
     mut builder: rpm::PackageBuilder,
-) -> Result<rpm::PackageBuilder, AppError> {
+) -> Result<rpm::PackageBuilder> {
     for entry in std::fs::read_dir(full_path)? {
         let entry = entry?;
         let metadata = entry.metadata()?;
@@ -457,7 +376,8 @@ fn add_dir<P: AsRef<Path>>(
 
         let file_name = source
             .file_name()
-            .ok_or_else(|| app_err!("path does not have filename"))?;
+            .context("path does not have filename")?;
+
         new_target.push(file_name);
 
         builder = if metadata.file_type().is_dir() {
@@ -471,28 +391,28 @@ fn add_dir<P: AsRef<Path>>(
 
 fn parse_file_options(
     raw_files: &Vec<String>,
-) -> Result<Vec<(&str, rpm::FileOptionsBuilder)>, AppError> {
+) -> Result<Vec<(&str, rpm::FileOptionsBuilder)>> {
     raw_files
         .iter()
         .map(|input| {
             let parts: Vec<&str> = input.split(":").collect();
             if parts.len() != 2 {
-                return Err(app_err!(
+                anyhow::bail!(
                     "invalid file argument:{} it needs to be of the form <source-path>:<dest-path>",
                     input
-                ));
+                );
             }
             Ok((parts[0], rpm::FileOptions::new(parts[1])))
         })
         .collect()
 }
 
-fn parse_dependency(line: &str) -> Result<rpm::Dependency, AppError> {
+fn parse_dependency(line: &str) -> Result<rpm::Dependency> {
     let re = Regex::new(r"^([a-zA-Z0-9\-\._]+)(\s*(>=|>|=|<=|<)(.+))?$").unwrap();
 
     let parts = re
         .captures(line)
-        .ok_or(app_err!("invalid pattern in dependency block {}", line))?;
+        .with_context(|| format!("invalid pattern in dependency block {}", line))?;
     let parts: Vec<String> = parts
         .iter()
         .filter(|c| c.is_some())
@@ -509,10 +429,10 @@ fn parse_dependency(line: &str) -> Result<rpm::Dependency, AppError> {
             ">=" => rpm::Dependency::greater_eq(&parts[1], &parts[4]),
             ">" => rpm::Dependency::greater(&parts[1], &parts[4]),
             _ => {
-                return Err(app_err!(
+                anyhow::bail!(
                     "regex is invalid here, got unknown match {}",
                     &parts[3]
-                ));
+                );
             }
         };
         Ok(dep)
