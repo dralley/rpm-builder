@@ -12,8 +12,10 @@ rpm = { version = "0.18.0", default-features = false, features = ["zstd-compress
 clap_derive = { version = "4.5" }
 chrono = "0.4"
 regex = "1"
-clap = "4.5.46"
+clap = "4.5.47"
 anyhow = "1.0.99"
 
 [dev-dependencies]
 assert_cmd = "2.0.17"
+tempdir = "0.3.7"
+predicates = "3.1.3"
