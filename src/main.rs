@@ -168,6 +168,34 @@ pub struct Cli {
 
     #[arg(
         long,
+        value_name = "SUGGESTS",
+        help = "Indicates that the rpm suggests another package. Use the format '<name> [>|>=|=|<=|< version]'"
+    )]
+    pub suggests: Vec<String>,
+
+    #[arg(
+        long,
+        value_name = "ENHANCES",
+        help = "Indicates that the rpm enhances another package. Use the format '<name> [>|>=|=|<=|< version]'"
+    )]
+    pub enhances: Vec<String>,
+
+    #[arg(
+        long,
+        value_name = "RECOMMENDS",
+        help = "Indicates that the rpm recommends another package. Use the format '<name> [>|>=|=|<=|< version]'"
+    )]
+    pub recommends: Vec<String>,
+
+    #[arg(
+        long,
+        value_name = "SUPPLEMENTS",
+        help = "Indicates that the rpm supplements another package. Use the format '<name> [>|>=|=|<=|< version]'"
+    )]
+    pub supplements: Vec<String>,
+
+    #[arg(
+        long,
         value_name = "PREINSTALLSCRIPT",
         help = "Path to a file that contains the pre-installation script"
     )]
@@ -345,6 +373,26 @@ fn main() -> Result<()> {
     for item in args.provides {
         let dependency = parse_dependency(&item)?;
         builder = builder.provides(dependency);
+    }
+
+    for item in args.suggests {
+        let dependency = parse_dependency(&item)?;
+        builder = builder.suggests(dependency);
+    }
+
+    for item in args.enhances {
+        let dependency = parse_dependency(&item)?;
+        builder = builder.enhances(dependency);
+    }
+
+    for item in args.recommends {
+        let dependency = parse_dependency(&item)?;
+        builder = builder.recommends(dependency);
+    }
+
+    for item in args.supplements {
+        let dependency = parse_dependency(&item)?;
+        builder = builder.supplements(dependency);
     }
 
     let pkg = if let Some(signing_key_path) = args.sign_with_pgp_asc {
