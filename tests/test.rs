@@ -228,6 +228,46 @@ fn test_package_compression() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+/// Test adding changelogs to the package
+#[test]
+fn test_adding_changelogs() -> Result<(), Box<dyn std::error::Error>> {
+    let tmp_dir = TempDir::new("rpm-builder-test-adding-changelogs")?;
+    let out_file = tmp_dir.path().join("test-changelogs-1.0.0-1.noarch.rpm");
+
+    assert!(!fs::exists(&out_file).unwrap());
+    Command::cargo_bin(env!("CARGO_PKG_NAME"))
+        .unwrap()
+        .arg("test-changelogs")
+        .arg("--changelog")
+        .arg("Walter White <ww@breakingbad.com>:I am the danger:2018-01-02")
+        .arg("--changelog")
+        .arg("jpinkman@breakingbad.com:yeah, science!:2019-02-03")
+        .arg("-o")
+        .arg(&out_file)
+        .assert()
+        .success();
+    assert!(fs::exists(&out_file).unwrap());
+
+    let pkg = rpm::Package::open(&out_file)?;
+    assert_eq!(
+        pkg.metadata.get_changelog_entries()?,
+        vec![
+            rpm::ChangelogEntry {
+                name: "Walter White <ww@breakingbad.com>".to_owned(),
+                timestamp: 1514851200,
+                description: "I am the danger".to_owned()
+            },
+            rpm::ChangelogEntry {
+                name: "jpinkman@breakingbad.com".to_owned(),
+                timestamp: 1549152000,
+                description: "yeah, science!".to_owned()
+            }
+        ]
+    );
+
+    Ok(())
+}
+
 /// Test using the signing options
 #[test]
 fn test_signature() -> Result<(), Box<dyn std::error::Error>> {

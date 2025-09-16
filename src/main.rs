@@ -196,14 +196,14 @@ pub struct Cli {
 
     #[arg(
         long,
-        value_name = "PREINSTALLSCRIPT",
+        value_name = "PRE_INSTALL_SCRIPT",
         help = "Path to a file that contains the pre-installation script"
     )]
     pub pre_install_script: Option<PathBuf>,
 
     #[arg(
         long,
-        value_name = "POSTINSTALLSCRIPT",
+        value_name = "POST_INSTALL_SCRIPT",
         help = "Path to a file that contains the post-installation script"
     )]
     pub post_install_script: Option<PathBuf>,
