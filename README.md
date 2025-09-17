@@ -25,11 +25,14 @@ rpm-builder \
 | ---                 | ---                                                                                                           |
 | `arch`              | Specify the target architecture                                                                               |
 | `changelog`         | Add a changelog entry to the rpm. The entry has the form `<author>:<content>:<yyyy-mm-dd>` (time is in utc)   |
-| `compression`       | Specify the compression algorithm. Currently only gzip and zstd are supported                                           |
+| `compression`       | Specify the compression algorithm. Currently only gzip, zstd, and "none" are supported                        |
 | `config-file`       | Add a config-file to the rpm                                                                                  |
 | `conflicts`         | Indicates that the rpm conflicts with another package. Use the format `<name> [> | >= | = | <= | < version]`  |
-| `desc`              | Give a description of the package                                                                             |
+| `summary`           | Give a basic description of the package (will also be used for package "description")                         |
 | `dir`               | Add a directory and all its files to the rpm                                                                  |
+| `doc-dir`           | Add a directory of documentation and all its files to the rpm                                                 |
+| `enhances`          | Indicates that the rpm enhances another package. Use the format `<name> [> | >= | = | <= | < version]`        |
+| `config-dir`        | Add a directory of config files to the rpm                                                                    |
 | `doc-file`          | Add a documentation-file to the rpm                                                                           |
 | `exec-file`         | Add a executable-file to the rpm                                                                              |
 | `file`              | Add a regular file to the rpm                                                                                 |
@@ -39,6 +42,9 @@ rpm-builder \
 | `out`               | Specify an out file                                                                                           |
 | `provides`          | Indicates that the rpm provides another package. Use the format `<name> [> | >= | = | <= | < version]`        |
 | `release`           | Specify release number of the package                                                                         |
+| `recommends`        | Indicates that the rpm recommends another package. Use the format `<name> [> | >= | = | <= | < version]`      |
 | `requires`          | Indicates that the rpm requires another package. Use the format `<name> [> | >= | = | <= | < version]`        |
 | `version`           | Specify a version                                                                                             |
 | `sign-with-pgp-asc` | Sign package with the specified pgp key                                                                       |
+| `suggests`          | Indicates that the rpm suggests another package. Use the format `<name> [> | >= | = | <= | < version]`        |
+| `supplements`       | Indicates that the rpm supplements another package. Use the format `<name> [> | >= | = | <= | < version]`     |

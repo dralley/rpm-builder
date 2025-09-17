@@ -377,6 +377,11 @@ fn test_adding_files() -> Result<(), Box<dyn std::error::Error>> {
                 "{}/tests/assets/example_config.toml:/usr/share/man/test-adding-files/example_config.toml",
                 workspace_path.to_string_lossy()
             ),
+            "--file",
+            &format!(
+                "{}/tests/assets/multiplication_tables.py:/usr/share/test-adding-files/multiplication_tables",
+                workspace_path.to_string_lossy()
+            ),
             "--dir",
             &format!(
                 "{}/tests/assets/module:/usr/lib/test-adding-files",
@@ -603,6 +608,25 @@ fn test_adding_files() -> Result<(), Box<dyn std::error::Error>> {
             flags: rpm::FileFlags::DOC,
             digest: Some(rpm::FileDigest {
                 digest: "f0e4c2f76c58916ec258f246851bea091d14d4247a2fc3e18694461b1816e13b"
+                    .to_owned(),
+                algo: rpm::DigestAlgorithm::Sha2_256,
+            }),
+            caps: None,
+            linkto: "".to_owned(),
+            ima_signature: None,
+        },
+        rpm::FileEntry {
+            path: PathBuf::from("/usr/share/test-adding-files/multiplication_tables"),
+            mode: rpm::FileMode::regular(0o644),
+            ownership: rpm::FileOwnership {
+                user: "root".to_owned(),
+                group: "root".to_owned(),
+            },
+            modified_at: rpm::Timestamp(1756059087),
+            size: 118,
+            flags: rpm::FileFlags::empty(),
+            digest: Some(rpm::FileDigest {
+                digest: "a2919ab787acdb6f6ae85a8f18c4e983745988ac6c1cd0ec75c8971196d2953c"
                     .to_owned(),
                 algo: rpm::DigestAlgorithm::Sha2_256,
             }),
