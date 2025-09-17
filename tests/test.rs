@@ -269,6 +269,87 @@ fn test_adding_changelogs() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+/// Test adding dependencies / provides / conflicts / etc. to the package
+#[test]
+fn test_adding_dependencies() -> Result<(), Box<dyn std::error::Error>> {
+    let tmp_dir = TempDir::new("rpm-builder-test-adding-dependencies")?;
+    let out_file = tmp_dir.path().join("test-dependencies-1.0.0-1.noarch.rpm");
+
+    assert!(!fs::exists(&out_file).unwrap());
+    Command::cargo_bin(env!("CARGO_PKG_NAME"))
+        .unwrap()
+        .args(vec![
+            "test-dependencies",
+            "--provides",
+            "/usr/bin/rpmbuilder",
+            "--requires",
+            "wget >= 1.0.0",
+            "--obsoletes",
+            "rpmbuild",
+            "--conflicts",
+            "foobar123",
+            "--suggests",
+            "foobar456 = 2.3.4",
+            "--recommends",
+            "foobar678 < 2.0",
+            "--enhances",
+            "foobar678 > 1.0",
+            "--supplements",
+            "foobarbaz",
+            "-o",
+            &out_file.to_string_lossy(),
+        ])
+        .assert()
+        .success();
+    assert!(fs::exists(&out_file).unwrap());
+
+    let pkg = rpm::Package::open(&out_file)?;
+
+    assert_eq!(
+        pkg.metadata.get_provides()?,
+        vec![
+            rpm::Dependency::any("/usr/bin/rpmbuilder"),
+            rpm::Dependency::eq("test-dependencies", "1.0.0"),
+            rpm::Dependency::eq("test-dependencies(noarch)", "1.0.0"),
+        ]
+    );
+    // has no requires by default, except for rpmlib() ones
+    assert_eq!(
+        pkg.metadata
+            .get_requires()?
+            .into_iter()
+            .filter(|r| !r.flags.contains(rpm::DependencyFlags::RPMLIB))
+            .collect::<Vec<rpm::Dependency>>(),
+        vec![rpm::Dependency::greater_eq("wget", "1.0.0")]
+    );
+    assert_eq!(
+        pkg.metadata.get_obsoletes()?,
+        vec![rpm::Dependency::any("rpmbuild"),]
+    );
+    assert_eq!(
+        pkg.metadata.get_conflicts()?,
+        vec![rpm::Dependency::any("foobar123"),]
+    );
+    assert_eq!(
+        pkg.metadata.get_suggests()?,
+        vec![rpm::Dependency::eq("foobar456", "2.3.4")]
+    );
+    assert_eq!(
+        pkg.metadata.get_recommends()?,
+        vec![rpm::Dependency::less("foobar678", "2.0"),]
+    );
+    assert_eq!(
+        pkg.metadata.get_enhances()?,
+        vec![rpm::Dependency::greater("foobar678", "1.0"),]
+    );
+    assert_eq!(
+        pkg.metadata.get_supplements()?,
+        vec![rpm::Dependency::any("foobarbaz"),]
+    );
+
+    Ok(())
+}
+
 /// Test adding files and directories to the RPM
 #[test]
 fn test_adding_files() -> Result<(), Box<dyn std::error::Error>> {

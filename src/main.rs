@@ -519,7 +519,7 @@ fn parse_file_options(raw_files: &Vec<String>) -> Result<Vec<(&str, rpm::FileOpt
 }
 
 fn parse_dependency(line: &str) -> Result<rpm::Dependency> {
-    let re = Regex::new(r"^([a-zA-Z0-9\-\._]+)(\s*(>=|>|=|<=|<)(.+))?$").unwrap();
+    let re = Regex::new(r"^([a-zA-Z0-9\-\._/]+)(\s*(>=|>|=|<=|<)(.+))?$").unwrap();
 
     let parts = re
         .captures(line)
@@ -533,12 +533,13 @@ fn parse_dependency(line: &str) -> Result<rpm::Dependency> {
     if parts.len() <= 2 {
         Ok(rpm::Dependency::any(&parts[1]))
     } else {
+        let version = parts[4].trim();
         let dep = match parts[3].as_str() {
-            "=" => rpm::Dependency::eq(&parts[1], &parts[4]),
-            "<" => rpm::Dependency::less(&parts[1], &parts[4]),
-            "<=" => rpm::Dependency::less_eq(&parts[1], &parts[4]),
-            ">=" => rpm::Dependency::greater_eq(&parts[1], &parts[4]),
-            ">" => rpm::Dependency::greater(&parts[1], &parts[4]),
+            "=" => rpm::Dependency::eq(&parts[1], version),
+            "<" => rpm::Dependency::less(&parts[1], version),
+            "<=" => rpm::Dependency::less_eq(&parts[1], version),
+            ">=" => rpm::Dependency::greater_eq(&parts[1], version),
+            ">" => rpm::Dependency::greater(&parts[1], version),
             _ => {
                 anyhow::bail!("regex is invalid here, got unknown match {}", &parts[3]);
             }
