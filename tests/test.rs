@@ -4,6 +4,7 @@ use std::path::{Path, PathBuf};
 
 use assert_cmd::Command;
 use predicates::prelude::*;
+use pretty_assertions::assert_eq;
 use tempdir::TempDir;
 
 /// Test default behavior w/ minimum possible input provided, e.g. version, release auto-fill
@@ -264,6 +265,272 @@ fn test_adding_changelogs() -> Result<(), Box<dyn std::error::Error>> {
             }
         ]
     );
+
+    Ok(())
+}
+
+/// Test adding files and directories to the RPM
+#[test]
+fn test_adding_files() -> Result<(), Box<dyn std::error::Error>> {
+    let workspace_path = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let tmp_dir = TempDir::new("rpm-builder-test-adding-files")?;
+    let out_file = tmp_dir.path().join("test-adding-files-1.0.0-1.noarch.rpm");
+
+    assert!(!fs::exists(&out_file).unwrap());
+    Command::cargo_bin(env!("CARGO_PKG_NAME"))
+        .unwrap()
+        .args(vec![
+            "test-adding-files",
+            "--exec-file",
+            &format!(
+                "{}/tests/assets/multiplication_tables.py:/usr/bin/multiplication_tables",
+                workspace_path.to_string_lossy()
+            ),
+            "--config-file",
+            &format!(
+                "{}/tests/assets/example_config.toml:/etc/test-adding-files/example_config.toml",
+                workspace_path.to_string_lossy()
+            ),
+            "--doc-file",
+            &format!(
+                "{}/tests/assets/example_config.toml:/usr/share/man/test-adding-files/example_config.toml",
+                workspace_path.to_string_lossy()
+            ),
+            "--dir",
+            &format!(
+                "{}/tests/assets/module:/usr/lib/test-adding-files",
+                workspace_path.to_string_lossy()
+            ),
+            "--config-dir",
+            &format!(
+                "{}/tests/assets/foo:/etc/test-adding-files",
+                workspace_path.to_string_lossy()
+            ),
+            "--doc-dir",
+            &format!(
+                "{}/tests/assets/foo:/usr/share/man/test-adding-files",
+                workspace_path.to_string_lossy()
+            ),
+            "-o",
+            &out_file.to_string_lossy(),
+        ])
+        .assert()
+        .success();
+    assert!(fs::exists(&out_file).unwrap());
+
+    let pkg = rpm::Package::open(&out_file)?;
+    let entries = vec![
+        rpm::FileEntry {
+            path: PathBuf::from("/etc/test-adding-files/bar/a.txt"),
+            mode: rpm::FileMode::regular(0o644),
+            ownership: rpm::FileOwnership {
+                user: "root".to_owned(),
+                group: "root".to_owned(),
+            },
+            modified_at: rpm::Timestamp(1756496832),
+            size: 4,
+            flags: rpm::FileFlags::CONFIG,
+            digest: Some(rpm::FileDigest {
+                digest: "f0e4c2f76c58916ec258f246851bea091d14d4247a2fc3e18694461b1816e13b"
+                    .to_owned(),
+                algo: rpm::DigestAlgorithm::Sha2_256,
+            }),
+            caps: None,
+            linkto: "".to_owned(),
+            ima_signature: None,
+        },
+        rpm::FileEntry {
+            path: PathBuf::from("/etc/test-adding-files/bar/b.txt"),
+            mode: rpm::FileMode::regular(0o644),
+            ownership: rpm::FileOwnership {
+                user: "root".to_owned(),
+                group: "root".to_owned(),
+            },
+            modified_at: rpm::Timestamp(1756496832),
+            size: 4,
+            flags: rpm::FileFlags::CONFIG,
+            digest: Some(rpm::FileDigest {
+                digest: "f0e4c2f76c58916ec258f246851bea091d14d4247a2fc3e18694461b1816e13b"
+                    .to_owned(),
+                algo: rpm::DigestAlgorithm::Sha2_256,
+            }),
+            caps: None,
+            linkto: "".to_owned(),
+            ima_signature: None,
+        },
+        rpm::FileEntry {
+            path: PathBuf::from("/etc/test-adding-files/example_config.toml"),
+            mode: rpm::FileMode::regular(0o644),
+            ownership: rpm::FileOwnership {
+                user: "root".to_owned(),
+                group: "root".to_owned(),
+            },
+            modified_at: rpm::Timestamp(1756059087),
+            size: 31,
+            flags: rpm::FileFlags::CONFIG,
+            digest: Some(rpm::FileDigest {
+                digest: "53a79039d2d619dd41cd04d550d94c531ec634cda9457f25031c141d8e4820e8"
+                    .to_owned(),
+                algo: rpm::DigestAlgorithm::Sha2_256,
+            }),
+            caps: None,
+            linkto: "".to_owned(),
+            ima_signature: None,
+        },
+        rpm::FileEntry {
+            path: PathBuf::from("/etc/test-adding-files/z.txt"),
+            mode: rpm::FileMode::regular(0o644),
+            ownership: rpm::FileOwnership {
+                user: "root".to_owned(),
+                group: "root".to_owned(),
+            },
+            modified_at: rpm::Timestamp(1756496832),
+            size: 4,
+            flags: rpm::FileFlags::CONFIG,
+            digest: Some(rpm::FileDigest {
+                digest: "f0e4c2f76c58916ec258f246851bea091d14d4247a2fc3e18694461b1816e13b"
+                    .to_owned(),
+                algo: rpm::DigestAlgorithm::Sha2_256,
+            }),
+            caps: None,
+            linkto: "".to_owned(),
+            ima_signature: None,
+        },
+        rpm::FileEntry {
+            path: PathBuf::from("/usr/bin/multiplication_tables"),
+            mode: rpm::FileMode::regular(0o755),
+            ownership: rpm::FileOwnership {
+                user: "root".to_owned(),
+                group: "root".to_owned(),
+            },
+            modified_at: rpm::Timestamp(1756059087),
+            size: 118,
+            flags: rpm::FileFlags::empty(),
+            digest: Some(rpm::FileDigest {
+                digest: "a2919ab787acdb6f6ae85a8f18c4e983745988ac6c1cd0ec75c8971196d2953c"
+                    .to_owned(),
+                algo: rpm::DigestAlgorithm::Sha2_256,
+            }),
+            caps: None,
+            linkto: "".to_owned(),
+            ima_signature: None,
+        },
+        rpm::FileEntry {
+            path: PathBuf::from("/usr/lib/test-adding-files/__init__.py"),
+            mode: rpm::FileMode::regular(0o644),
+            ownership: rpm::FileOwnership {
+                user: "root".to_owned(),
+                group: "root".to_owned(),
+            },
+            modified_at: rpm::Timestamp(1756059087),
+            size: 0,
+            flags: rpm::FileFlags::empty(),
+            digest: Some(rpm::FileDigest {
+                digest: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                    .to_owned(),
+                algo: rpm::DigestAlgorithm::Sha2_256,
+            }),
+            caps: None,
+            linkto: "".to_owned(),
+            ima_signature: None,
+        },
+        rpm::FileEntry {
+            path: PathBuf::from("/usr/lib/test-adding-files/hello.py"),
+            mode: rpm::FileMode::regular(0o644),
+            ownership: rpm::FileOwnership {
+                user: "root".to_owned(),
+                group: "root".to_owned(),
+            },
+            modified_at: rpm::Timestamp(1756059087),
+            size: 53,
+            flags: rpm::FileFlags::empty(),
+            digest: Some(rpm::FileDigest {
+                digest: "b184c98581244d04ffbe7e17af060daf515a1e79f869d5ac6fffb8276ea61ca1"
+                    .to_owned(),
+                algo: rpm::DigestAlgorithm::Sha2_256,
+            }),
+            caps: None,
+            linkto: "".to_owned(),
+            ima_signature: None,
+        },
+        rpm::FileEntry {
+            path: PathBuf::from("/usr/share/man/test-adding-files/bar/a.txt"),
+            mode: rpm::FileMode::regular(0o644),
+            ownership: rpm::FileOwnership {
+                user: "root".to_owned(),
+                group: "root".to_owned(),
+            },
+            modified_at: rpm::Timestamp(1756496832),
+            size: 4,
+            flags: rpm::FileFlags::DOC,
+            digest: Some(rpm::FileDigest {
+                digest: "f0e4c2f76c58916ec258f246851bea091d14d4247a2fc3e18694461b1816e13b"
+                    .to_owned(),
+                algo: rpm::DigestAlgorithm::Sha2_256,
+            }),
+            caps: None,
+            linkto: "".to_owned(),
+            ima_signature: None,
+        },
+        rpm::FileEntry {
+            path: PathBuf::from("/usr/share/man/test-adding-files/bar/b.txt"),
+            mode: rpm::FileMode::regular(0o644),
+            ownership: rpm::FileOwnership {
+                user: "root".to_owned(),
+                group: "root".to_owned(),
+            },
+            modified_at: rpm::Timestamp(1756496832),
+            size: 4,
+            flags: rpm::FileFlags::DOC,
+            digest: Some(rpm::FileDigest {
+                digest: "f0e4c2f76c58916ec258f246851bea091d14d4247a2fc3e18694461b1816e13b"
+                    .to_owned(),
+                algo: rpm::DigestAlgorithm::Sha2_256,
+            }),
+            caps: None,
+            linkto: "".to_owned(),
+            ima_signature: None,
+        },
+        rpm::FileEntry {
+            path: PathBuf::from("/usr/share/man/test-adding-files/example_config.toml"),
+            mode: rpm::FileMode::regular(0o644),
+            ownership: rpm::FileOwnership {
+                user: "root".to_owned(),
+                group: "root".to_owned(),
+            },
+            modified_at: rpm::Timestamp(1756059087),
+            size: 31,
+            flags: rpm::FileFlags::DOC,
+            digest: Some(rpm::FileDigest {
+                digest: "53a79039d2d619dd41cd04d550d94c531ec634cda9457f25031c141d8e4820e8"
+                    .to_owned(),
+                algo: rpm::DigestAlgorithm::Sha2_256,
+            }),
+            caps: None,
+            linkto: "".to_owned(),
+            ima_signature: None,
+        },
+        rpm::FileEntry {
+            path: PathBuf::from("/usr/share/man/test-adding-files/z.txt"),
+            mode: rpm::FileMode::regular(0o644),
+            ownership: rpm::FileOwnership {
+                user: "root".to_owned(),
+                group: "root".to_owned(),
+            },
+            modified_at: rpm::Timestamp(1756496832),
+            size: 4,
+            flags: rpm::FileFlags::DOC,
+            digest: Some(rpm::FileDigest {
+                digest: "f0e4c2f76c58916ec258f246851bea091d14d4247a2fc3e18694461b1816e13b"
+                    .to_owned(),
+                algo: rpm::DigestAlgorithm::Sha2_256,
+            }),
+            caps: None,
+            linkto: "".to_owned(),
+            ima_signature: None,
+        },
+    ];
+    assert_eq!(pkg.metadata.get_file_entries()?, entries);
 
     Ok(())
 }

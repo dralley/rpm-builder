@@ -8,7 +8,7 @@ authors = [
 edition = "2024"
 
 [dependencies]
-rpm = { version = "0.18.0", default-features = false, features = ["zstd-compression", "gzip-compression", "signature-pgp"] }
+rpm = { version = "0.18.2", default-features = false, features = ["zstd-compression", "gzip-compression", "signature-pgp"] }
 clap_derive = { version = "4.5" }
 chrono = "0.4"
 regex = "1"
@@ -19,3 +19,4 @@ anyhow = "1.0.99"
 assert_cmd = "2.0.17"
 tempdir = "0.3.7"
 predicates = "3.1.3"
+pretty_assertions = "1.4.1"

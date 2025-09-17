@@ -125,6 +125,20 @@ pub struct Cli {
 
     #[arg(
         long,
+        value_name = "DOC_DIR",
+        help = "Add a documentation directory and all its files to the rpm"
+    )]
+    pub doc_dir: Vec<String>,
+
+    #[arg(
+        long,
+        value_name = "CONFIG_DIR",
+        help = "Add a config directory and all its files to the rpm"
+    )]
+    pub config_dir: Vec<String>,
+
+    #[arg(
+        long,
         value_name = "COMPRESSION",
         value_enum,
         help = "Specify the compression algorithm."
@@ -277,25 +291,15 @@ fn main() -> Result<()> {
             .with_context(|| format!("error adding config file {}", src))?;
     }
 
-    for dir in args.dir {
-        let parts: Vec<&str> = dir.split(":").collect();
-        if parts.len() != 2 {
-            anyhow::bail!(
-                "invalid file argument:{} it needs to be of the form <source-path>:<dest-path>",
-                dir
-            );
-        }
-        let dir = parts[0];
-        let target = PathBuf::from(parts[1]);
-        builder =
-            add_dir(dir, &target, builder).with_context(|| format!("error adding dir {}", dir))?;
-    }
-
     for (src, options) in parse_file_options(&args.doc_file)? {
         builder = builder
             .with_file(src, options.is_doc())
             .with_context(|| format!("error adding doc file {}", src))?;
     }
+
+    builder = process_dir(&args.dir, builder, |o| o)?;
+    builder = process_dir(&args.doc_dir, builder, |o| o.is_doc())?;
+    builder = process_dir(&args.config_dir, builder, |o| o.is_config())?;
 
     if let Some(scriptlet_path) = args.pre_install_script {
         let content = fs::read_to_string(&scriptlet_path).with_context(|| {
@@ -440,11 +444,39 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn add_dir<P: AsRef<Path>>(
+fn process_dir<F>(
+    dirs: &[String],
+    mut builder: rpm::PackageBuilder,
+    options_modifier: F,
+) -> Result<rpm::PackageBuilder>
+where
+    F: Fn(rpm::FileOptionsBuilder) -> rpm::FileOptionsBuilder,
+{
+    for dir in dirs {
+        let parts: Vec<&str> = dir.split(":").collect();
+        if parts.len() != 2 {
+            anyhow::bail!(
+                "invalid file argument:{} it needs to be of the form <source-path>:<dest-path>",
+                dir
+            );
+        }
+        let dir = parts[0];
+        let target = PathBuf::from(parts[1]);
+        builder = add_dir(dir, &target, builder, &options_modifier)
+            .with_context(|| format!("error adding dir {}", dir))?;
+    }
+    Ok(builder)
+}
+
+fn add_dir<P: AsRef<Path>, F>(
     full_path: P,
     target_path: &PathBuf,
     mut builder: rpm::PackageBuilder,
-) -> Result<rpm::PackageBuilder> {
+    options_modifier: &F,
+) -> Result<rpm::PackageBuilder>
+where
+    F: Fn(rpm::FileOptionsBuilder) -> rpm::FileOptionsBuilder,
+{
     for entry in std::fs::read_dir(full_path)? {
         let entry = entry?;
         let metadata = entry.metadata()?;
@@ -461,9 +493,10 @@ fn add_dir<P: AsRef<Path>>(
         new_target.push(file_name);
 
         builder = if metadata.file_type().is_dir() {
-            add_dir(&source, &new_target, builder)?
+            add_dir(&source, &new_target, builder, options_modifier)?
         } else {
-            builder.with_file(&source, rpm::FileOptions::new(new_target.to_string_lossy()))?
+            let options = options_modifier(rpm::FileOptions::new(new_target.to_string_lossy()));
+            builder.with_file(&source, options)?
         }
     }
     Ok(builder)
