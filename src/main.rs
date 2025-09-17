@@ -1,39 +1,10 @@
 use anyhow::{Context, Result};
-use chrono;
-use clap;
 use clap::Parser;
-use clap_derive;
 use clap_derive::{Parser, ValueEnum};
 use regex::Regex;
-use rpm;
 
 use std::fs;
 use std::path::{Path, PathBuf};
-
-pub const NAME_ARG: &str = "name";
-pub const OUT_ARG: &str = "out";
-pub const VERSION_ARG: &str = "version";
-pub const EPOCH_ARG: &str = "epoch";
-pub const LICENSE_ARG: &str = "license";
-pub const ARCH_ARG: &str = "arch";
-pub const RELEASE_ARG: &str = "release";
-pub const DESC_ARG: &str = "desc";
-pub const FILE_ARG: &str = "file";
-pub const EXEC_FILE_ARG: &str = "exec-file";
-pub const DOC_FILE_ARG: &str = "doc-file";
-pub const CONFIG_FILE_ARG: &str = "config-file";
-pub const DIR_ARG: &str = "dir";
-pub const COMPRESSION_ARG: &str = "compression";
-pub const CHANGELOG_ARG: &str = "changelog";
-pub const REQUIRES_ARG: &str = "requires";
-pub const OBSOLETES_ARG: &str = "obsoletes";
-pub const PROVIDES_ARG: &str = "provides";
-pub const CONFLICTS_ARG: &str = "conflicts";
-pub const PRE_INSTALL_SCRIPTLET_ARG: &str = "pre-install-script";
-pub const POST_INSTALL_SCRIPTLET_ARG: &str = "post-install-script";
-pub const PRE_UNINSTALL_SCRIPTLET_ARG: &str = "pre-uninstall-script";
-pub const POST_UNINSTALL_SCRIPTLET_ARG: &str = "post-uninstall-script";
-pub const SIGN_WITH_PGP_ASC_ARG: &str = "sign-with-pgp-asc";
 
 #[derive(Parser, Debug)]
 #[command(name = "rpm-builder", about = "Build RPMs with ease")]
@@ -302,42 +273,26 @@ fn main() -> Result<()> {
     builder = process_dir(&args.config_dir, builder, |o| o.is_config())?;
 
     if let Some(scriptlet_path) = args.pre_install_script {
-        let content = fs::read_to_string(&scriptlet_path).with_context(|| {
-            format!(
-                "error reading {} {:?}",
-                PRE_INSTALL_SCRIPTLET_ARG, scriptlet_path
-            )
-        })?;
+        let content = fs::read_to_string(&scriptlet_path)
+            .with_context(|| format!("error reading pre-install-script {:?}", scriptlet_path))?;
         builder = builder.pre_install_script(content);
     }
 
     if let Some(scriptlet_path) = args.post_install_script {
-        let content = fs::read_to_string(&scriptlet_path).with_context(|| {
-            format!(
-                "error reading {} {:?}",
-                POST_INSTALL_SCRIPTLET_ARG, scriptlet_path
-            )
-        })?;
+        let content = fs::read_to_string(&scriptlet_path)
+            .with_context(|| format!("error reading post-install-script {:?}", scriptlet_path))?;
         builder = builder.post_install_script(content);
     }
 
     if let Some(scriptlet_path) = args.pre_uninstall_script {
-        let content = fs::read_to_string(&scriptlet_path).with_context(|| {
-            format!(
-                "error reading {} {:?}",
-                PRE_UNINSTALL_SCRIPTLET_ARG, scriptlet_path
-            )
-        })?;
+        let content = fs::read_to_string(&scriptlet_path)
+            .with_context(|| format!("error reading pre-uninstall-script {:?}", scriptlet_path))?;
         builder = builder.pre_uninstall_script(content);
     }
 
     if let Some(scriptlet_path) = args.post_uninstall_script {
-        let content = fs::read_to_string(&scriptlet_path).with_context(|| {
-            format!(
-                "error reading {} {:?}",
-                POST_UNINSTALL_SCRIPTLET_ARG, scriptlet_path
-            )
-        })?;
+        let content = fs::read_to_string(&scriptlet_path)
+            .with_context(|| format!("error reading post-uninstall-script {:?}", scriptlet_path))?;
         builder = builder.post_uninstall_script(content);
     }
 
@@ -424,11 +379,11 @@ fn main() -> Result<()> {
 
     let output_path = args
         .out
-        .and_then(|path| {
+        .map(|path| {
             if fs::metadata(&path).is_ok_and(|m| m.is_dir()) {
-                Some(Path::new(&path).join(filename))
+                Path::new(&path).join(filename)
             } else {
-                Some(Path::new(&path).with_extension("rpm"))
+                Path::new(&path).with_extension("rpm")
             }
         })
         .unwrap_or_else(|| {
