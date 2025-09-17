@@ -2,10 +2,12 @@
 name = "rpm-builder"
 version = "0.1.0"
 authors = [
+    "Daniel Alley <dalley@redhat.com",
     "Rene Richter <richterrettich@gmail.com>",
-    "Daniel Alley <dalley@redhat.com"
 ]
 edition = "2024"
+license = "Apache-2.0"
+description = "A simple Rust CLI utility for creating simple RPMs"
 
 [dependencies]
 rpm = { version = "0.18.2", default-features = false, features = ["zstd-compression", "gzip-compression", "signature-pgp"] }
