@@ -4,7 +4,7 @@
 %global crate rpm-builder
 
 Name:           rpm-builder
-Version:        0.2.0
+Version:        0.2.1
 Release:        %autorelease
 Summary:        Simple Rust CLI utility for creating simple RPMs
 
@@ -13,17 +13,6 @@ URL:            https://crates.io/crates/rpm-builder
 Source:         %{crates_source}
 
 BuildRequires:  cargo-rpm-macros >= 24
-
-%global _description %{expand:
-A simple Rust CLI utility for creating simple RPMs.}
-
-%description %{_description}
-
-%package     -n %{crate}
-Summary:        %{summary}
-License:        Apache-2.0
-
-%description -n %{crate} %{_description}
 
 %files       -n %{crate}
 %license LICENSE
@@ -52,4 +41,7 @@ License:        Apache-2.0
 %endif
 
 %changelog
+* Mon Sep 22 2025 Daniel Alley <dalley@redhat.com> 0.2.1-1
+- new package built with tito
+
 %autochangelog

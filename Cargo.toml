@@ -1,6 +1,6 @@
 [package]
 name = "rpm-builder"
-version = "0.2.0"
+version = "0.2.1"
 authors = [
     "Daniel Alley <dalley@redhat.com",
     "Rene Richter <richterrettich@gmail.com>",
