@@ -22,3 +22,12 @@ assert_cmd = "2.0.17"
 tempdir = "0.3.7"
 predicates = "3.1.3"
 pretty_assertions = "1.4.1"
+
+[package.metadata.generate-rpm]
+assets = [
+    { source = "target/release/rpm-builder", dest = "/usr/bin/rpm-builder", mode = "755" },
+]
+
+[profile.release]
+strip="debuginfo"
+lto = "thin"
