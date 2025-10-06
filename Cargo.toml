@@ -7,10 +7,14 @@ authors = [
 ]
 edition = "2024"
 license = "Apache-2.0"
+homepage = "https://github.com/rpm-rs/rpm-builder"
+repository = "https://github.com/rpm-rs/rpm-builder"
+keywords = ["RPM", "packaging"]
+categories = ["parsing", "development-tools"]
 description = "A simple Rust CLI utility for creating simple RPMs"
 
 [dependencies]
-rpm = { version = "0.18.2", default-features = false, features = ["zstd-compression", "gzip-compression", "signature-pgp"] }
+rpm = { version = "0.18.4", default-features = false, features = ["zstd-compression", "gzip-compression", "signature-pgp"] }
 clap_derive = { version = "4.5" }
 chrono = "0.4"
 regex = "1"
