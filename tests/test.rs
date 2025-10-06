@@ -670,3 +670,60 @@ fn test_signature() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
+
+/// Test the --rpm-version flag
+#[test]
+fn test_rpm_format() -> Result<(), Box<dyn std::error::Error>> {
+    let tmp_dir = TempDir::new("rpm-builder-test-rpm-format")?;
+
+    // Test with rpm-version 6 (should contain RPMFORMAT and PAYLOADSIZE tags, use LONG* size tags)
+    let out_file_v6 = tmp_dir.path().join("test-rpm-format-6-1.0.0-1.noarch.rpm");
+    Command::cargo_bin(env!("CARGO_PKG_NAME"))
+        .unwrap()
+        .arg("test-rpm-format-6")
+        .arg("--rpm-format")
+        .arg("v6")
+        .arg("-o")
+        .arg(&out_file_v6)
+        .assert()
+        .success();
+    assert!(fs::exists(&out_file_v6).unwrap());
+
+    let pkg_v6 = rpm::PackageMetadata::open(&out_file_v6)?;
+
+    assert!(pkg_v6.header.entry_is_present(rpm::IndexTag::RPMTAG_RPMFORMAT));
+    assert!(pkg_v6.header.entry_is_present(rpm::IndexTag::RPMTAG_PAYLOADSIZE));
+    assert!(pkg_v6.header.entry_is_present(rpm::IndexTag::RPMTAG_LONGSIZE));
+
+    // Test with rpm-version 4 (should not contain RPMFORMAT or PAYLOADSIZE)
+    let out_file_v4 = tmp_dir.path().join("test-rpm-format-4-1.0.0-1.noarch.rpm");
+    Command::cargo_bin(env!("CARGO_PKG_NAME"))
+        .unwrap()
+        .arg("test-rpm-format-4")
+        .arg("--rpm-format")
+        .arg("v4")
+        .arg("-o")
+        .arg(&out_file_v4)
+        .assert()
+        .success();
+    assert!(fs::exists(&out_file_v4).unwrap());
+
+    let pkg_v4 = rpm::PackageMetadata::open(&out_file_v4)?;
+
+    assert!(!pkg_v4.header.entry_is_present(rpm::IndexTag::RPMTAG_RPMFORMAT));
+    assert!(!pkg_v4.header.entry_is_present(rpm::IndexTag::RPMTAG_PAYLOADSIZE));
+    assert!(pkg_v4.header.entry_is_present(rpm::IndexTag::RPMTAG_SIZE));
+
+    // Test invalid rpm-version value
+    Command::cargo_bin(env!("CARGO_PKG_NAME"))
+        .unwrap()
+        .arg("test-rpm-format-invalid")
+        .arg("--rpm-format")
+        .arg("invalid")
+        .arg("-o")
+        .arg(&tmp_dir.path())
+        .assert()
+        .failure();
+
+    Ok(())
+}

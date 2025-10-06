@@ -44,7 +44,8 @@ rpm-builder \
 | `release`           | Specify release number of the package                                                                         |
 | `recommends`        | Indicates that the rpm recommends another package. Use the format `<name> [> | >= | = | <= | < version]`      |
 | `requires`          | Indicates that the rpm requires another package. Use the format `<name> [> | >= | = | <= | < version]`        |
-| `version`           | Specify a version                                                                                             |
+| `rpm-format`        | Specify which version of the RPM package specification to use when building the package                       |
 | `sign-with-pgp-asc` | Sign package with the specified pgp key                                                                       |
 | `suggests`          | Indicates that the rpm suggests another package. Use the format `<name> [> | >= | = | <= | < version]`        |
 | `supplements`       | Indicates that the rpm supplements another package. Use the format `<name> [> | >= | = | <= | < version]`     |
+| `version`           | Specify a version                                                                                             |

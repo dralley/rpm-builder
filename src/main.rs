@@ -209,6 +209,14 @@ pub struct Cli {
 
     #[arg(
         long,
+        value_name = "RPM_VERSION",
+        value_enum,
+        help = "Specify the RPM standard version to use when building the package."
+    )]
+    pub rpm_version: Option<RpmVersion>,
+
+    #[arg(
+        long,
         value_name = "SIGN_WITH_PGP_ASC",
         help = "Sign this package with the specified PGP secret key"
     )]
@@ -222,6 +230,12 @@ pub enum Compression {
     None,
 }
 
+#[derive(ValueEnum, Clone, Debug)]
+pub enum RpmVersion {
+    V4,
+    V6,
+}
+
 fn main() -> Result<()> {
     let args = Cli::parse();
 
@@ -232,7 +246,13 @@ fn main() -> Result<()> {
         _ => rpm::CompressionType::default(),
     };
 
-    let config = rpm::BuildConfig::default().compression(compression);
+    let config = match args.rpm_version {
+        Some(RpmVersion::V4) => rpm::BuildConfig::v4(),
+        Some(RpmVersion::V6) => rpm::BuildConfig::v6(),
+        None => rpm::BuildConfig::default(),
+    }
+    .compression(compression);
+
     let mut builder = rpm::PackageBuilder::new(
         &args.name,
         &args.version,
