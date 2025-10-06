@@ -209,11 +209,11 @@ pub struct Cli {
 
     #[arg(
         long,
-        value_name = "RPM_VERSION",
+        value_name = "RPM_FORMAT",
         value_enum,
-        help = "Specify the RPM standard version to use when building the package."
+        help = "Specify the RPM spec format to use when building the package."
     )]
-    pub rpm_version: Option<RpmVersion>,
+    pub rpm_format: Option<RpmVersion>,
 
     #[arg(
         long,
@@ -246,7 +246,7 @@ fn main() -> Result<()> {
         _ => rpm::CompressionType::default(),
     };
 
-    let config = match args.rpm_version {
+    let config = match args.rpm_format {
         Some(RpmVersion::V4) => rpm::BuildConfig::v4(),
         Some(RpmVersion::V6) => rpm::BuildConfig::v6(),
         None => rpm::BuildConfig::default(),
