@@ -2,7 +2,7 @@ use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use assert_cmd::Command;
+use assert_cmd::{Command, cargo_bin};
 use predicates::prelude::*;
 use pretty_assertions::assert_eq;
 use tempdir::TempDir;
@@ -14,8 +14,7 @@ fn test_basic_defaults() -> Result<(), Box<dyn std::error::Error>> {
     let out_file = tmp_dir.path().join("test-1.0.0-1.noarch.rpm");
 
     assert!(!fs::exists(&out_file).unwrap());
-    Command::cargo_bin(env!("CARGO_PKG_NAME"))
-        .unwrap()
+    Command::new(cargo_bin!())
         .arg("test")
         .arg("-o")
         .arg(&out_file)
@@ -73,8 +72,7 @@ fn test_basic_defaults() -> Result<(), Box<dyn std::error::Error>> {
 fn test_no_name_provided() -> Result<(), Box<dyn std::error::Error>> {
     let tmp_dir = TempDir::new("rpm-builder-no-name-provided")?;
 
-    Command::cargo_bin(env!("CARGO_PKG_NAME"))
-        .unwrap()
+    Command::new(cargo_bin!())
         .arg("-o")
         .arg(&tmp_dir.path())
         .assert()
@@ -92,8 +90,7 @@ fn test_set_basic_metadata() -> Result<(), Box<dyn std::error::Error>> {
         .join("test-set-metadata-2.3.4-5.fc46.x86_64.rpm");
 
     assert!(!fs::exists(&out_file).unwrap());
-    Command::cargo_bin(env!("CARGO_PKG_NAME"))
-        .unwrap()
+    Command::new(cargo_bin!())
         .arg("test-set-metadata")
         .arg("--epoch")
         .arg("1")
@@ -134,8 +131,7 @@ fn test_output_option() -> Result<(), Box<dyn std::error::Error>> {
     // test using an explicit filename as output
     let explicit_filename = &tmp_dir.path().join("explicit-filename.rpm");
     assert!(!fs::exists(&explicit_filename).unwrap());
-    Command::cargo_bin(env!("CARGO_PKG_NAME"))
-        .unwrap()
+    Command::new(cargo_bin!())
         .arg("test-output")
         .arg("-o")
         .arg(&explicit_filename)
@@ -148,8 +144,7 @@ fn test_output_option() -> Result<(), Box<dyn std::error::Error>> {
 
     // test using a directory as output, no provided filename
     assert!(!fs::exists(&file_in_tmp).unwrap());
-    Command::cargo_bin(env!("CARGO_PKG_NAME"))
-        .unwrap()
+    Command::new(cargo_bin!())
         .arg("test-output")
         .arg("-o")
         .arg(&tmp_dir.path())
@@ -163,8 +158,7 @@ fn test_output_option() -> Result<(), Box<dyn std::error::Error>> {
 
     let expected_filename = Path::new("test-no-output-1.0.0-1.noarch.rpm");
     assert!(!fs::exists(&expected_filename).unwrap());
-    Command::cargo_bin(env!("CARGO_PKG_NAME"))
-        .unwrap()
+    Command::new(cargo_bin!())
         .arg("test-no-output")
         .assert()
         .success();
@@ -187,8 +181,7 @@ fn test_package_compression() -> Result<(), Box<dyn std::error::Error>> {
             &compression
         ));
         assert!(!fs::exists(&out_file).unwrap());
-        Command::cargo_bin(env!("CARGO_PKG_NAME"))
-            .unwrap()
+        Command::new(cargo_bin!())
             .arg(&format!("test-compression-{}", &compression))
             .arg("--exec-file")
             .arg(&format!(
@@ -216,8 +209,7 @@ fn test_package_compression() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     // Test an invalid value for the compression option
-    Command::cargo_bin(env!("CARGO_PKG_NAME"))
-        .unwrap()
+    Command::new(cargo_bin!())
         .arg("test-compression")
         .arg("--compression")
         .arg("invalid")
@@ -236,8 +228,7 @@ fn test_adding_changelogs() -> Result<(), Box<dyn std::error::Error>> {
     let out_file = tmp_dir.path().join("test-changelogs-1.0.0-1.noarch.rpm");
 
     assert!(!fs::exists(&out_file).unwrap());
-    Command::cargo_bin(env!("CARGO_PKG_NAME"))
-        .unwrap()
+    Command::new(cargo_bin!())
         .arg("test-changelogs")
         .arg("--changelog")
         .arg("Walter White <ww@breakingbad.com>:I am the danger:2018-01-02")
@@ -276,8 +267,7 @@ fn test_adding_dependencies() -> Result<(), Box<dyn std::error::Error>> {
     let out_file = tmp_dir.path().join("test-dependencies-1.0.0-1.noarch.rpm");
 
     assert!(!fs::exists(&out_file).unwrap());
-    Command::cargo_bin(env!("CARGO_PKG_NAME"))
-        .unwrap()
+    Command::new(cargo_bin!())
         .args(vec![
             "test-dependencies",
             "--provides",
@@ -358,8 +348,7 @@ fn test_adding_files() -> Result<(), Box<dyn std::error::Error>> {
     let out_file = tmp_dir.path().join("test-adding-files-1.0.0-1.noarch.rpm");
 
     assert!(!fs::exists(&out_file).unwrap());
-    Command::cargo_bin(env!("CARGO_PKG_NAME"))
-        .unwrap()
+    Command::new(cargo_bin!())
         .args(vec![
             "test-adding-files",
             "--exec-file",
@@ -651,8 +640,7 @@ fn test_signature() -> Result<(), Box<dyn std::error::Error>> {
     let public_key_path = workspace_path.join("tests/assets/package-manager.key.pub");
 
     assert!(!fs::exists(&out_file).unwrap());
-    Command::cargo_bin(env!("CARGO_PKG_NAME"))
-        .unwrap()
+    Command::new(cargo_bin!())
         .arg("test-signature")
         .arg("--sign-with-pgp-asc")
         .arg(&private_key_path)
@@ -678,8 +666,7 @@ fn test_rpm_format() -> Result<(), Box<dyn std::error::Error>> {
 
     // Test with rpm-version 6 (should contain RPMFORMAT and PAYLOADSIZE tags, use LONG* size tags)
     let out_file_v6 = tmp_dir.path().join("test-rpm-format-6-1.0.0-1.noarch.rpm");
-    Command::cargo_bin(env!("CARGO_PKG_NAME"))
-        .unwrap()
+    Command::new(cargo_bin!())
         .arg("test-rpm-format-6")
         .arg("--rpm-format")
         .arg("v6")
@@ -697,8 +684,7 @@ fn test_rpm_format() -> Result<(), Box<dyn std::error::Error>> {
 
     // Test with rpm-version 4 (should not contain RPMFORMAT or PAYLOADSIZE)
     let out_file_v4 = tmp_dir.path().join("test-rpm-format-4-1.0.0-1.noarch.rpm");
-    Command::cargo_bin(env!("CARGO_PKG_NAME"))
-        .unwrap()
+    Command::new(cargo_bin!())
         .arg("test-rpm-format-4")
         .arg("--rpm-format")
         .arg("v4")
@@ -715,8 +701,7 @@ fn test_rpm_format() -> Result<(), Box<dyn std::error::Error>> {
     assert!(pkg_v4.header.entry_is_present(rpm::IndexTag::RPMTAG_SIZE));
 
     // Test invalid rpm-version value
-    Command::cargo_bin(env!("CARGO_PKG_NAME"))
-        .unwrap()
+    Command::new(cargo_bin!())
         .arg("test-rpm-format-invalid")
         .arg("--rpm-format")
         .arg("invalid")
