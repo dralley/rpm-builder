@@ -278,7 +278,10 @@ fn main() -> Result<()> {
         &args.arch,
         &args.summary,
     );
-    builder.using_config(config).release(args.release).epoch(args.epoch);
+    builder
+        .using_config(config)
+        .release(args.release)
+        .epoch(args.epoch);
 
     for (src, options) in parse_file_options(&args.file)? {
         builder
