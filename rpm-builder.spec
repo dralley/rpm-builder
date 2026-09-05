@@ -1,7 +1,7 @@
 %bcond check 0
 
 Name:           rpm-builder
-Version:        0.5.0
+Version:        0.5.1
 Release:        %{?autorelease}%{!?autorelease:1%{?dist}}
 Summary:        Simple Rust CLI utility for creating simple RPMs
 
@@ -10,7 +10,7 @@ URL:            https://github.com/rpm-rs/rpm-builder
 Source0:        https://crates.io/api/v1/crates/%{name}/%{version}/download#/%{name}-%{version}.crate
 Source1:        %{name}-%{version}-vendor.tar.gz
 
-BuildRequires:  rust >= 1.85
+BuildRequires:  rust >= 1.88
 BuildRequires:  cargo
 
 %if 0%{?rhel} == 9
@@ -49,5 +49,8 @@ cargo test --release --frozen
 %{_bindir}/rpm-builder
 
 %changelog
+* Mon Sep 5 2026 Daniel Alley <dalley@redhat.com> - 0.5.0-1
+- Update to 0.5.0
+
 * Mon Apr 20 2026 Daniel Alley <dalley@redhat.com> - 0.4.0-1
 - Update to 0.4.0
